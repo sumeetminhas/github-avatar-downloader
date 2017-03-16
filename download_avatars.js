@@ -1,32 +1,23 @@
+var getRepoContributors = require('./getRepoContributors');
+var args = process.argv.slice(2);
+
+var owner = args[2];
+var repo = args[3];
+
 var request = require('request');
 var fs = require('fs');
 
-var GITHUB_USER = "sumeetminhas";
-var GITHUB_TOKEN = "5a4e9495f16c8d2e241542b82c9341f0d2410d32";
+var GITHUB_USER = process.env.GITHUB_USER;
+var GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
-//console.log('Welcome to the GitHub Avatar Downloader!');
+console.log('Welcome to the GitHub Avatar Downloader!');
 
-function getRepoContributors(repoOwner, repoName, cb) {
-  var options = {
-    url: 'https://'+ GITHUB_USER + ':' + GITHUB_TOKEN + '@api.github.com/repos/' + repoOwner + '/' + repoName + '/contributors',
-    headers: {
-      'User-Agent': "GitHub Avatar Downloader - Student Project"
-    }
-  }
-  request.get(options, (err, response, body) => {
-    if (err) {
-      console.log("error", err);
-      return false;
-    }
-    var data = JSON.parse(body);
-    getAvatarURL(data);
+function downloadImageByURL(url, filePath) {
+  var req = request.get(url)
+  .on('response', function (response) {
+    console.log("we're downloading your response.");
+    req.pipe(fs.createWriteStream(filePath));
   });
-}
-
-function getAvatarURL(data) {
-  data.forEach((person) => {
-    console.log(person.avatar_url);
-  })
 }
 
 getRepoContributors("jquery", "jquery", function(err, result) {
@@ -34,9 +25,3 @@ getRepoContributors("jquery", "jquery", function(err, result) {
   console.log("Result:", result);
 });
 
-function downloadImageByURL(url, filePath) {
-  request.get('https://avatars3.githubusercontent.com/u/28185?v=3')
-  r.pipe(fs.createWriteStream('./'))
-
-
-}
