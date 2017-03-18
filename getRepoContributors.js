@@ -1,23 +1,25 @@
-var request = require('request');
+const request = require('request');
+const dotenv = require('dotenv').config();
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const GITHUB_USER = process.env.GITHUB_USER;
 
-var GITHUB_USER = process.env.GITHUB_USER;
-var GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-
-module.exports = function getRepoContributors(repoOwner, repoName, cb) {
+function getRepoContributors(repoOwner, repoName, cb) {
+  let requestURL = `https://${GITHUB_USER}:${GITHUB_TOKEN}@api.github.com/repos/${repoOwner}/${repoName}/contributors`;
   var options = {
-    url: 'https://' + GITHUB_USER + ':' + GITHUB_TOKEN + '@api.github.com/repos/' + repoOwner + '/' + repoName + '/contributors',
+    url: requestURL,
     headers: {
-      'User-Agent': "GitHub Avatar Downloader - Student Project"
+      'User-Agent': 'request'
     }
   };
-  request.get(options, (err, response, body) => {
-    if (err) {
-      console.log("error", err);
-      return false;
-    }
-    var data = JSON.parse(body);
-    data.forEach((person) => {
-      downloadImageByURL(person.avatar_url, './avatars/' + person.login + '.jpg');
-    });
+
+  request(options, function (error, response, body) {
+    console.log('Response Status Code:', response.statusCode, '\n');
+    var records = JSON.parse(body);
+    cb(error, records);
+  })
+  .on('error', function (err) {
+    throw err;
   });
-};
+}
+
+module.exports = getRepoContributors;

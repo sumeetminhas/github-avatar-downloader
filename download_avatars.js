@@ -1,27 +1,41 @@
-var getRepoContributors = require('./getRepoContributors');
-var args = process.argv.slice(2);
+const fs = require('fs');
+const request = require('request');
+const getRepoContributors = require('./getRepoContributors');
+let owner = process.argv[2];
+let repo = process.argv[3];
+const filepath = './avatars/';
 
-var owner = args[2];
-var repo = args[3];
 
-var request = require('request');
-var fs = require('fs');
 
-var GITHUB_USER = process.env.GITHUB_USER;
-var GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-
-console.log('Welcome to the GitHub Avatar Downloader!');
-
-function downloadImageByURL(url, filePath) {
-  var req = request.get(url)
-  .on('response', function (response) {
-    console.log("we're downloading your response.");
-    req.pipe(fs.createWriteStream(filePath));
-  });
+function downloadImageByURL(url, gitUser) {
+  request.get(url)
+         .on('error', (err) => { throw err; })
+         .pipe(fs.createWriteStream(filepath + gitUser + '.jpg'))
+         .on('error', (response) => {
+            if (response.code === 'ENOENT'){
+              console.log('directory', filepath, 'does not exist!');
+              // throw response;
+              //fs.mkdir(filepath)
+            }
+          })
+         .on('finish', (response) => console.log('Download complete! (' + arguments[1] + ')'));
 }
 
-getRepoContributors("jquery", "jquery", function(err, result) {
-  console.log("Errors:", err);
-  console.log("Result:", result);
-});
+function downloadAvatars() {
+  if (!fs.existsSync(filepath)){
+    console.log('WARNING: directory', filepath, 'does not exist. Creating it interactively. \n')
+        fs.mkdir(filepath);
+      }
+  if (owner && repo) {
+    getRepoContributors(owner, repo, (err, result) => {
 
+      for (entry of result) {
+        downloadImageByURL(entry.avatar_url, entry.login);
+      }
+    });
+  } else {
+    console.log('Usage: \n $ node download_avatars.js <owner> <repo>');
+  }
+}
+
+downloadAvatars();
